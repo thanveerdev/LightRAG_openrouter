@@ -19,12 +19,17 @@ if not os.path.exists(WORKING_DIR):
 async def llm_model_func(
     prompt, system_prompt=None, history_messages=[], keyword_extraction=False, **kwargs
 ):
+    # Get API key from environment variable
+    openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
+    if not openrouter_api_key:
+        raise ValueError("OPENROUTER_API_KEY environment variable is not set")
+        
     return await openai_complete_if_cache(
         "deepseek/deepseek-r1-0528:free",  # or "deepseek-chat" if you prefer
         prompt,
         system_prompt=system_prompt,
         history_messages=history_messages,
-        api_key=os.getenv("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"),
+        api_key=openrouter_api_key,
         base_url="https://openrouter.ai/api/v1",
         **kwargs
     )
