@@ -20,16 +20,16 @@ async def llm_model_func(
     prompt, system_prompt=None, history_messages=[], keyword_extraction=False, **kwargs
 ):
     # Get API key from environment variable
-    openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
-    if not openrouter_api_key:
-        raise ValueError("OPENROUTER_API_KEY environment variable is not set")
+    api_key = os.getenv("LLM_BINDING_API_KEY")
+    if not api_key:
+        raise ValueError("LLM_BINDING_API_KEY environment variable is not set")
         
     return await openai_complete_if_cache(
         "deepseek/deepseek-r1-0528:free",  # or "deepseek-chat" if you prefer
         prompt,
         system_prompt=system_prompt,
         history_messages=history_messages,
-        api_key=openrouter_api_key,
+        api_key=api_key,
         base_url="https://openrouter.ai/api/v1",
         **kwargs
     )
