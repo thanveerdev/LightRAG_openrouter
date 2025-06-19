@@ -203,7 +203,25 @@ async def openai_complete_if_cache(
             f"OpenAI API Call Failed,\nModel: {model},\nParams: {kwargs}, Got: {e}"
         )
         await openai_async_client.close()  # Ensure client is closed
-        raise
+        # Fallback logic: if InvalidResponseError, try paid model/key once
+        from lightrag.exceptions import InvalidResponseError
+        if isinstance(e, InvalidResponseError) and not kwargs.get("_is_fallback_attempt"):
+            paid_model = os.getenv("LLM_MODEL_PAID")
+            paid_key = os.getenv("LLM_BINDING_API_KEY_PAID")
+            if paid_model or paid_key:
+                logger.warning("InvalidResponseError: Falling back to paid OpenRouter model.")
+                # Mark this as a fallback attempt to avoid infinite recursion
+                kwargs["_is_fallback_attempt"] = True
+                response = await openai_async_client.chat.completions.create(
+                    model=paid_model or model,
+                    messages=messages,
+                    api_key=paid_key or kwargs.get("api_key"),
+                    **{k: v for k, v in kwargs.items() if k != "api_key"}
+                )
+            else:
+                raise
+        else:
+            raise
 
     if hasattr(response, "__aiter__"):
 
