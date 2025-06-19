@@ -293,7 +293,17 @@ async def openai_complete_if_cache(
             content = response.choices[0].message.content
 
             # Handle models that return content in 'reasoning' field instead of 'content' field
-            if not content or content.strip() == "":
+            # Check if this might be an OpenRouter model response
+            is_openrouter = base_url is not None and "openrouter" in base_url.lower()
+            
+            # For OpenRouter responses, always check if reasoning field has content
+            if is_openrouter and hasattr(response.choices[0].message, "reasoning") and response.choices[0].message.reasoning:
+                # If content is empty or reasoning field has more detailed content, use reasoning
+                if not content or content.strip() == "" or len(response.choices[0].message.reasoning) > len(content):
+                    content = response.choices[0].message.reasoning
+                    logger.info("Using content from 'reasoning' field for OpenRouter model")
+            # For non-OpenRouter models, only check reasoning as fallback
+            elif not content or content.strip() == "":
                 # Check if content is available in the 'reasoning' field
                 if hasattr(response.choices[0].message, "reasoning") and response.choices[0].message.reasoning:
                     content = response.choices[0].message.reasoning
