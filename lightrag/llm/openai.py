@@ -292,6 +292,13 @@ async def openai_complete_if_cache(
 
             content = response.choices[0].message.content
 
+            # Handle models that return content in 'reasoning' field instead of 'content' field
+            if not content or content.strip() == "":
+                # Check if content is available in the 'reasoning' field
+                if hasattr(response.choices[0].message, "reasoning") and response.choices[0].message.reasoning:
+                    content = response.choices[0].message.reasoning
+                    logger.info("Using content from 'reasoning' field as 'content' field was empty")
+
             if not content or content.strip() == "":
                 logger.error("Received empty content from OpenAI API")
                 await openai_async_client.close()  # Ensure client is closed
